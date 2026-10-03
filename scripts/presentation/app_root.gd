@@ -3,6 +3,7 @@ extends Node2D
 const CURSOR_ARROW: Texture2D = preload("res://assets/gui/kenney_cursor-pixel-pack/arrow_cursor.png")
 const CURSOR_HAND: Texture2D = preload("res://assets/gui/kenney_cursor-pixel-pack/hand_cursor.png")
 const BATTLE_SCENE: PackedScene = preload("res://scenes/battle/battle_scene.tscn")
+const PROBLEM_GRAPH_SCENE: PackedScene = preload("res://scenes/graph/problem_graph_scene.tscn")
 const INITIAL_PLAYER_POSITION := Vector2(520.0, 940.0)
 
 @onready var _player: PlayerActor = $Player
@@ -19,6 +20,7 @@ var _location_actors: Array[LocationActor] = []
 var _current_target: Node2D
 var _current_target_id: StringName = &""
 var _battle_scene: BattleScene
+var _problem_graph_scene: ProblemGraphScene
 var _pending_save_slot: StringName = &""
 
 func _ready() -> void:
@@ -43,6 +45,7 @@ func _ready() -> void:
 	_hud.overwrite_confirmed.connect(_confirm_save_overwrite)
 	_hud.back_requested.connect(_on_menu_back)
 	_hud.pause_requested.connect(_open_pause_menu)
+	_hud.problem_graph_requested.connect(_open_problem_graph)
 	_hud.resume_requested.connect(_resume_from_pause)
 	_hud.save_requested.connect(_show_save_slots)
 	_hud.ui_click_requested.connect(_game_audio.play_ui_click)
@@ -71,6 +74,10 @@ func _process(delta: float) -> void:
 	_update_status(update)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_G and _panel_mode == "exploration":
+		_open_problem_graph()
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		match _panel_mode:
 			"exploration":
@@ -83,6 +90,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_open_pause_menu()
 			"overwrite_confirmation":
 				_show_save_slots()
+			"problem_graph":
+				_close_problem_graph()
 			_:
 				return
 		get_viewport().set_input_as_handled()
@@ -196,6 +205,7 @@ func _start_encounter(request: EncounterStartRequest) -> void:
 	_player.set_controls_enabled(false)
 	_hud.show_exploration()
 	_hud.set_pause_control_visible(false)
+	_hud.set_graph_control_visible(false)
 	_update_context_action()
 
 func _on_battle_choice(choice_id: StringName) -> void:
@@ -213,6 +223,37 @@ func _on_battle_closed() -> void:
 	_session.close_encounter_result()
 	_player.set_controls_enabled(true)
 	_show_exploration()
+
+func _open_problem_graph() -> void:
+	if _session == null or _panel_mode != "exploration":
+		return
+	_problem_graph_scene = PROBLEM_GRAPH_SCENE.instantiate() as ProblemGraphScene
+	_problem_graph_scene.close_requested.connect(_close_problem_graph)
+	_problem_graph_scene.debug_completion_requested.connect(_debug_complete_problem_graph_node)
+	add_child(_problem_graph_scene)
+	_problem_graph_scene.present(_session.problem_graph.get_nodes(), _session.problem_graph.get_completed_node_ids())
+	_panel_mode = "problem_graph"
+	_session.set_simulation_mode(GameSession.SimulationMode.BLOCKING_UI)
+	_player.set_controls_enabled(false)
+	_hud.set_graph_control_visible(false)
+	_hud.set_context_action(Vector2.ZERO, false)
+
+func _close_problem_graph() -> void:
+	if _panel_mode != "problem_graph":
+		return
+	if _problem_graph_scene != null and is_instance_valid(_problem_graph_scene):
+		_problem_graph_scene.queue_free()
+	_problem_graph_scene = null
+	_player.set_controls_enabled(true)
+	_show_exploration()
+
+func _debug_complete_problem_graph_node(node_id: StringName) -> void:
+	if _session == null or _problem_graph_scene == null:
+		return
+	if not _session.problem_graph.debug_complete_node(node_id):
+		_hud.set_notice("That graph node could not be completed.")
+		return
+	_problem_graph_scene.refresh_completed_nodes(_session.problem_graph.get_completed_node_ids())
 
 func _show_message(title: String, message: String) -> void:
 	_panel_mode = "message"
@@ -351,6 +392,7 @@ func _show_exploration() -> void:
 	_session.set_simulation_mode(GameSession.SimulationMode.EXPLORATION)
 	_refresh_current_target()
 	_hud.show_exploration()
+	_hud.set_graph_control_visible(true)
 	_update_status()
 	_update_context_action()
 

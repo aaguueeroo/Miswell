@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" path="res://scripts/presentation/problem_graph_scene.gd" id="1_graph"]
 
-[node name="ProblemGraphScene" type="Control"]
+[node name="ProblemGraphScene" type="CanvasLayer"]
 script = ExtResource("1_graph")

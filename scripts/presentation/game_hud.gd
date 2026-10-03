@@ -28,6 +28,7 @@ signal slot_selected(slot_id: StringName)
 signal overwrite_confirmed
 signal back_requested
 signal pause_requested
+signal problem_graph_requested
 signal resume_requested
 signal save_requested
 
@@ -54,6 +55,7 @@ var _context_elapsed: float = 0.0
 var _bottom_height: float = 150.0
 var _top_panel: PanelContainer
 var _pause_button: Button
+var _problem_graph_button: Button
 var _menu_backdrop: ColorRect
 var _center_panel: PanelContainer
 var _center_content: VBoxContainer
@@ -101,6 +103,7 @@ func show_exploration() -> void:
 	_menu_backdrop.visible = false
 	_center_panel.visible = false
 	_pause_button.visible = _mobile_mode
+	_problem_graph_button.visible = _mobile_mode
 	_set_dpad_visible(_mobile_mode)
 
 func show_welcome(has_saves: bool) -> void:
@@ -109,6 +112,7 @@ func show_welcome(has_saves: bool) -> void:
 	_bottom_panel.visible = false
 	_context_action.visible = false
 	_pause_button.visible = false
+	_problem_graph_button.visible = false
 	_set_dpad_visible(false)
 	_show_center_panel("Welcome", "Choose how to begin.")
 	_rebuild_menu_actions()
@@ -123,6 +127,7 @@ func show_slot_selection(slots: Array[Dictionary], saving: bool, message: String
 	_bottom_panel.visible = false
 	_context_action.visible = false
 	_pause_button.visible = false
+	_problem_graph_button.visible = false
 	_set_dpad_visible(false)
 	_show_center_panel("Choose a Save Slot", message)
 	_rebuild_menu_actions()
@@ -147,6 +152,7 @@ func show_pause(message: String = "") -> void:
 	_bottom_panel.visible = false
 	_context_action.visible = false
 	_pause_button.visible = false
+	_problem_graph_button.visible = false
 	_set_dpad_visible(false)
 	_show_center_panel("Paused", message if not message.is_empty() else "The game is paused.")
 	_rebuild_menu_actions()
@@ -174,6 +180,9 @@ func set_context_action(screen_position: Vector2, enabled: bool) -> void:
 
 func set_pause_control_visible(enabled: bool) -> void:
 	_pause_button.visible = enabled and _mobile_mode
+
+func set_graph_control_visible(enabled: bool) -> void:
+	_problem_graph_button.visible = enabled and _mobile_mode
 
 func show_message(title: String, message: String) -> void:
 	_panel_mode = "message"
@@ -264,6 +273,14 @@ func _build_ui() -> void:
 	_pause_button.pressed.connect(_emit_pause_requested)
 	footer.add_child(_pause_button)
 	_pause_button.visible = false
+	_problem_graph_button = Button.new()
+	_problem_graph_button.text = "Graph"
+	_problem_graph_button.custom_minimum_size = Vector2(62.0, 34.0)
+	_problem_graph_button.focus_mode = Control.FOCUS_NONE
+	_problem_graph_button.mouse_entered.connect(_emit_ui_hover_requested.bind(_problem_graph_button))
+	_problem_graph_button.pressed.connect(_emit_problem_graph_requested)
+	footer.add_child(_problem_graph_button)
+	_problem_graph_button.visible = false
 
 	_notice_label = Label.new()
 	_notice_label.clip_text = true
@@ -431,6 +448,7 @@ func _show_modal_panel() -> void:
 	_bottom_panel.visible = true
 	_context_action.visible = false
 	_pause_button.visible = false
+	_problem_graph_button.visible = false
 	_set_dpad_visible(false)
 
 func _set_dpad_visible(visible: bool) -> void:
@@ -555,6 +573,9 @@ func _emit_back() -> void:
 
 func _emit_pause_requested() -> void:
 	pause_requested.emit()
+
+func _emit_problem_graph_requested() -> void:
+	problem_graph_requested.emit()
 
 func _emit_resume() -> void:
 	resume_requested.emit()

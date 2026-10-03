@@ -1,5 +1,5 @@
 class_name ProblemGraphScene
-extends Control
+extends CanvasLayer
 
 signal close_requested
 signal debug_completion_requested(node_id: StringName)
@@ -9,21 +9,25 @@ var _selected_label: Label
 var _debug_complete_button: Button
 var _selected_node_id: StringName = &""
 var _definitions: Dictionary = {}
+var _overlay: Control
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer = 5
+	_overlay = Control.new()
+	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_overlay)
 	var backdrop := ColorRect.new()
 	backdrop.color = Color("#252321")
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(backdrop)
+	_overlay.add_child(backdrop)
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", 14)
 	margin.add_theme_constant_override("margin_right", 14)
 	margin.add_theme_constant_override("margin_top", 10)
 	margin.add_theme_constant_override("margin_bottom", 12)
-	add_child(margin)
+	_overlay.add_child(margin)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 7)
 	margin.add_child(column)
@@ -88,9 +92,9 @@ func _update_selected_node() -> void:
 		_debug_complete_button.disabled = true
 		return
 	var category_text := " · Category" if definition.is_category else ""
-	var acquired_text := " · Acquired" if not definition.is_category and _canvas.has_node(_selected_node_id) else ""
+	var acquired_text := " · Acquired" if _canvas.is_completed(_selected_node_id) else " · Not acquired" if not definition.is_category else ""
 	_selected_label.text = "%s%s%s  (%s)" % [definition.title, category_text, acquired_text, String(definition.node_id)]
-	_debug_complete_button.disabled = definition.is_category
+	_debug_complete_button.disabled = definition.is_category or _canvas.is_completed(_selected_node_id)
 
 func _emit_close_requested() -> void:
 	close_requested.emit()

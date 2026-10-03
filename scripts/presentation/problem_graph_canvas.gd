@@ -58,6 +58,9 @@ func is_category(node_id: StringName) -> bool:
 	var definition := _definitions.get(node_id) as ProblemGraphNodeDefinition
 	return definition != null and definition.is_category
 
+func is_completed(node_id: StringName) -> bool:
+	return _completed_ids.has(node_id)
+
 func _draw() -> void:
 	for child_id in _definitions:
 		var child_definition := _definitions[child_id] as ProblemGraphNodeDefinition
