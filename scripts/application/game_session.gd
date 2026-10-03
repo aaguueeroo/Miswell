@@ -9,6 +9,7 @@ var clock: WorldClockCoordinator
 var daily_transitions: DailyTransitionCoordinator
 var anxiety: AnxietyCoordinator
 var exploration: WorldExplorationCoordinator
+var problem_graph: ProblemGraphCoordinator
 var story: StoryProgressionCoordinator
 var encounters: EncounterCoordinator
 var simulation_mode: SimulationMode = SimulationMode.EXPLORATION
@@ -21,7 +22,8 @@ func _init(restored_state: GameSessionState = null, fractional_game_minutes: flo
 	daily_transitions = DailyTransitionCoordinator.new(state)
 	anxiety = AnxietyCoordinator.new(state)
 	exploration = WorldExplorationCoordinator.new(state, content_catalog)
-	story = StoryProgressionCoordinator.new(state, content_catalog)
+	problem_graph = ProblemGraphCoordinator.new(state, content_catalog)
+	story = StoryProgressionCoordinator.new(state, content_catalog, problem_graph)
 	encounters = EncounterCoordinator.new(state, content_catalog, story)
 
 func set_simulation_mode(mode: SimulationMode) -> void:

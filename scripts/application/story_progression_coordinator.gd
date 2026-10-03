@@ -3,10 +3,12 @@ extends RefCounted
 
 var _state: GameSessionState
 var _content: ContentCatalog
+var _problem_graph: ProblemGraphCoordinator
 
-func _init(state: GameSessionState, content: ContentCatalog) -> void:
+func _init(state: GameSessionState, content: ContentCatalog, problem_graph: ProblemGraphCoordinator) -> void:
 	_state = state
 	_content = content
+	_problem_graph = problem_graph
 
 func is_event_available(event_id: StringName, source: StringName) -> bool:
 	var event := _content.get_event(event_id)
@@ -145,6 +147,8 @@ func _effect_is_valid(effect: StoryEffectDefinition) -> bool:
 			return effect.target_id != &""
 		StoryEffectDefinition.EffectKind.SET_BOOLEAN_FACT:
 			return effect.fact_id != &""
+		StoryEffectDefinition.EffectKind.UNLOCK_PROBLEM_GRAPH_NODE:
+			return _problem_graph.can_unlock_node(effect.graph_node_id)
 		_:
 			return true
 
@@ -158,3 +162,5 @@ func _apply_effect(effect: StoryEffectDefinition) -> void:
 			_state.story_facts[effect.fact_id] = effect.boolean_value
 		StoryEffectDefinition.EffectKind.CONSUME_ANXIETY_EFFECT:
 			AnxietyRules.consume_effect(_state)
+		StoryEffectDefinition.EffectKind.UNLOCK_PROBLEM_GRAPH_NODE:
+			_problem_graph.unlock_node_from_story(effect.graph_node_id)

@@ -14,6 +14,7 @@ var life_stage_id: StringName = &""
 var outcome_journal: Array[StoryOutcomeRecord] = []
 var pending_event_ids: Array[StringName] = []
 var active_encounter: Dictionary = {}
+var completed_problem_graph_node_ids: Array[StringName] = []
 
 func has_action_been_used(action_id: StringName) -> bool:
 	return daily_action_ids.has(action_id)
@@ -41,3 +42,6 @@ func has_completed_event_today(event_id: StringName) -> bool:
 		if record.event_id == event_id and record.day_number == day_number:
 			return true
 	return false
+
+func has_completed_problem_graph_node(node_id: StringName) -> bool:
+	return completed_problem_graph_node_ids.has(node_id)

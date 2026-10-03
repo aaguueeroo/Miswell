@@ -42,6 +42,9 @@ func _encode_state(state: GameSessionState) -> Dictionary:
 	var pending_events: Array[String] = []
 	for event_id in state.pending_event_ids:
 		pending_events.append(String(event_id))
+	var completed_graph_nodes: Array[String] = []
+	for node_id in state.completed_problem_graph_node_ids:
+		completed_graph_nodes.append(String(node_id))
 	return {
 		"day_number": state.day_number,
 		"minute_of_day": state.minute_of_day,
@@ -55,6 +58,7 @@ func _encode_state(state: GameSessionState) -> Dictionary:
 		"life_stage_id": String(state.life_stage_id),
 		"outcome_journal": outcomes,
 		"pending_event_ids": pending_events,
+		"completed_problem_graph_node_ids": completed_graph_nodes,
 		"active_encounter": _to_json_value(state.active_encounter)
 	}
 
@@ -115,6 +119,15 @@ func _decode_state(data: Dictionary) -> GameSessionState:
 		return null
 	for event_id in pending_events:
 		state.pending_event_ids.append(StringName(str(event_id)))
+	var completed_graph_nodes: Variant = data.get("completed_problem_graph_node_ids", [])
+	if not completed_graph_nodes is Array:
+		return null
+	for node_id in completed_graph_nodes:
+		var restored_node_id := StringName(str(node_id))
+		if restored_node_id == &"":
+			return null
+		if not state.completed_problem_graph_node_ids.has(restored_node_id):
+			state.completed_problem_graph_node_ids.append(restored_node_id)
 	var encounter: Variant = data.get("active_encounter", {})
 	if not encounter is Dictionary:
 		return null
