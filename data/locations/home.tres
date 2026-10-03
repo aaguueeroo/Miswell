@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="LocationDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/domain/location_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+location_id = &"home"
+display_name = "Home"
+building_style = &"home"
+activity_label = "Go home"
+interaction_prompt = "Head home and let this day settle."
+visit_message = "A familiar place to come back to."
+interaction_offset = Vector2(3, -45)
+

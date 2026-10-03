@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="LocationDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/domain/location_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+location_id = &"school"
+display_name = "School"
+building_style = &"school"
+activity_label = "School"
+interaction_prompt = "Make time for class and the people you see there."
+visit_message = "You find a quiet place to finish a class project. The pressure eases once you get started."
+available_slots = Array[StringName]([&"morning", &"afternoon"])
+anxiety_delta = 4.0
+interaction_offset = Vector2(0, -61)
+

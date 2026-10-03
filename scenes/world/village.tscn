@@ -1,0 +1,28 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/world/village_map.tscn" id="1_city_map"]
+[ext_resource type="PackedScene" path="res://scenes/locations/location_actor.tscn" id="2_location"]
+[ext_resource type="Resource" path="res://data/locations/home.tres" id="3_home"]
+[ext_resource type="Resource" path="res://data/locations/school.tres" id="4_school"]
+[ext_resource type="Resource" path="res://data/locations/supermarket.tres" id="5_market"]
+[ext_resource type="Resource" path="res://data/locations/gym.tres" id="6_gym"]
+
+[node name="Village" type="Node2D"]
+
+[node name="CityMap" parent="." instance=ExtResource("1_city_map")]
+
+[node name="Home" parent="." instance=ExtResource("2_location")]
+position = Vector2(794, 490)
+definition = ExtResource("3_home")
+
+[node name="School" parent="." instance=ExtResource("2_location")]
+position = Vector2(335, 1050)
+definition = ExtResource("4_school")
+
+[node name="Supermarket" parent="." instance=ExtResource("2_location")]
+position = Vector2(730, 1370)
+definition = ExtResource("5_market")
+
+[node name="Gym" parent="." instance=ExtResource("2_location")]
+position = Vector2(326, 1755)
+definition = ExtResource("6_gym")

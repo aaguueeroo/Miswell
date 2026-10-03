@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LocationDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/domain/location_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+location_id = &"supermarket"
+display_name = "Supermarket"
+building_style = &"supermarket"
+activity_label = "Shop"
+interaction_prompt = "Pick up a few things for home."
+visit_message = "You pick up something the family asked for. It feels good to bring it home."
+available_slots = Array[StringName]([&"morning", &"afternoon", &"evening"])
+anxiety_delta = -2.0
+family_trust_delta = 1
+interaction_offset = Vector2(43, -58)
+
