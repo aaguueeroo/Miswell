@@ -1,32 +1,50 @@
 class_name GameHUD
 extends CanvasLayer
 
-signal choice_selected(choice_id: StringName)
+const PANEL_BEIGE: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/panel_beige.png")
+const PANEL_BROWN: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/panel_brown.png")
+const PANEL_INSET_BEIGE: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/panelInset_beige.png")
+const PANEL_INSET_BROWN: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/panelInset_brown.png")
+const BUTTON_LONG_BEIGE: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/buttonLong_beige.png")
+const BUTTON_LONG_BROWN: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png")
+const BUTTON_LONG_BROWN_PRESSED: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown_pressed.png")
+const BUTTON_SQUARE_BEIGE: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/buttonSquare_beige.png")
+const BUTTON_SQUARE_BROWN: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/buttonSquare_brown.png")
+const BUTTON_SQUARE_BROWN_PRESSED: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/buttonSquare_brown_pressed.png")
+const BAR_BACKGROUND: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/barBack_horizontalMid.png")
+const BAR_GREEN: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/barGreen_horizontalMid.png")
+const HUD_FONT: FontFile = preload("res://assets/fonts/Kenney/Fonts/Kenney Mini.ttf")
+const INTERACTION_PROMPT_E: Texture2D = preload("res://assets/gui/kenney_input-prompts-pixel/e_key.png")
+const MISWELL_LOGO: Texture2D = preload("res://assets/gui/miswell_logo.png")
+
 signal message_action_requested
 signal restart_requested
-signal slot_selected(slot_index: int)
-signal slot_picker_cancelled
 signal touch_direction_changed(direction: Vector2)
+signal ui_click_requested
+signal ui_hover_requested
+signal new_game_requested
+signal continue_requested
+signal slot_selected(slot_id: StringName)
+signal overwrite_confirmed
+signal back_requested
+signal pause_requested
+signal resume_requested
+signal save_requested
 
 var _root: Control
-var _day_label: Label
+var _clock_label: Label
 var _anxiety_label: Label
 var _anxiety_bar: ProgressBar
 var _trust_label: Label
 var _effect_label: Label
 var _notice_label: Label
-var _slot_activity_labels: Array[Label] = []
-var _slot_panels: Array[PanelContainer] = []
-var _slot_status_cache: Array[String] = []
 var _bottom_panel: PanelContainer
 var _bottom_content: VBoxContainer
 var _panel_heading: Label
 var _panel_body: Label
 var _actions: BoxContainer
-var _context_action: PanelContainer
-var _context_label: Label
+var _context_action: TextureRect
 var _context_anchor: Vector2 = Vector2.ZERO
-var _context_caption: String = ""
 var _dpad: PanelContainer
 var _touch_pressed: Dictionary = {}
 var _notice_seconds: float = 0.0
@@ -34,6 +52,15 @@ var _panel_mode: String = "exploration"
 var _mobile_mode: bool = false
 var _context_elapsed: float = 0.0
 var _bottom_height: float = 150.0
+var _top_panel: PanelContainer
+var _pause_button: Button
+var _menu_backdrop: ColorRect
+var _center_panel: PanelContainer
+var _center_content: VBoxContainer
+var _menu_actions: VBoxContainer
+var _center_heading: Label
+var _center_body: Label
+var _welcome_logo: TextureRect
 
 static func is_mobile_platform() -> bool:
 	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")
@@ -42,36 +69,25 @@ func _ready() -> void:
 	_mobile_mode = is_mobile_platform()
 	_build_ui()
 
-func update_status(state: GameState, day_text: String, timeline: Array[Dictionary]) -> void:
-	_day_label.text = day_text
+func update_clock(day_number: int, minute_of_day: int, phase: StringName) -> void:
+	var hour := floori(float(minute_of_day) / 60.0)
+	var minute := minute_of_day % 60
+	_clock_label.text = "Day %d  ·  %02d:%02d  ·  %s" % [day_number, hour, minute, "Day" if phase == &"day" else "Night"]
+
+func update_status(state: GameSessionState) -> void:
 	_anxiety_bar.value = state.anxiety
 	_anxiety_label.text = "ANXIETY  %d" % roundi(state.anxiety)
 	var trust_word := "steady"
-	if state.family_trust > 0:
+	var family_trust := RelationshipRules.value_for(state, &"family")
+	if family_trust > 0:
 		trust_word = "warmer"
-	elif state.family_trust < 0:
+	elif family_trust < 0:
 		trust_word = "strained"
 	_trust_label.text = "Family · " + trust_word
 	if state.anxiety_effect_id == &"":
 		_effect_label.text = "No temporary effect"
 	else:
 		_effect_label.text = "Anxious focus · %d sec" % ceili(state.anxiety_effect_seconds)
-	for index in range(mini(timeline.size(), _slot_activity_labels.size())):
-		var slot := timeline[index]
-		var activity := str(slot.get("activity", ""))
-		var slot_status := "scheduled:" + activity if not activity.is_empty() else "open"
-		if _slot_status_cache[index] == slot_status:
-			continue
-		_slot_status_cache[index] = slot_status
-		_slot_activity_labels[index].text = activity if not activity.is_empty() else "Free"
-		var scheduled := not activity.is_empty()
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color("#d7dfc8") if scheduled else Color("#27343a")
-		style.border_color = Color("#9cb28c") if scheduled else Color("#41534e")
-		style.set_border_width_all(1)
-		style.set_corner_radius_all(7)
-		_slot_panels[index].add_theme_stylebox_override("panel", style)
-		_slot_activity_labels[index].add_theme_color_override("font_color", Color("#27343a") if scheduled else Color("#d5ddcf"))
 
 func set_notice(text: String) -> void:
 	_notice_label.text = text
@@ -79,45 +95,85 @@ func set_notice(text: String) -> void:
 
 func show_exploration() -> void:
 	_panel_mode = "exploration"
+	_top_panel.visible = true
 	_bottom_panel.visible = false
-	_context_action.visible = not _mobile_mode and not _context_caption.is_empty()
+	_context_action.visible = false
+	_menu_backdrop.visible = false
+	_center_panel.visible = false
+	_pause_button.visible = _mobile_mode
 	_set_dpad_visible(_mobile_mode)
 
-func set_context_action(caption: String, screen_position: Vector2, enabled: bool) -> void:
-	_context_caption = caption
+func show_welcome(has_saves: bool) -> void:
+	_panel_mode = "welcome"
+	_top_panel.visible = false
+	_bottom_panel.visible = false
+	_context_action.visible = false
+	_pause_button.visible = false
+	_set_dpad_visible(false)
+	_show_center_panel("Welcome", "Choose how to begin.")
+	_rebuild_menu_actions()
+	_add_button("New Game", _emit_new_game, 48.0, _menu_actions)
+	var continue_button := _add_button("Continue", _emit_continue, 48.0, _menu_actions)
+	continue_button.disabled = not has_saves
+	_fit_center_panel()
+
+func show_slot_selection(slots: Array[Dictionary], saving: bool, message: String = "") -> void:
+	_panel_mode = "save_slots" if saving else "continue_slots"
+	_top_panel.visible = false
+	_bottom_panel.visible = false
+	_context_action.visible = false
+	_pause_button.visible = false
+	_set_dpad_visible(false)
+	_show_center_panel("Choose a Save Slot", message)
+	_rebuild_menu_actions()
+	for slot in slots:
+		var slot_id := StringName(str(slot.get("slot_id", "")))
+		var occupied := bool(slot.get("occupied", false))
+		var valid := bool(slot.get("valid", false))
+		var caption := str(slot.get("display_name", "Save Slot")) + " — Empty"
+		if occupied and valid:
+			var minute := int(slot.get("minute_of_day", 0))
+			caption = "%s — Day %d · %02d:%02d" % [str(slot.get("display_name", "Save Slot")), int(slot.get("day_number", 1)), floori(float(minute) / 60.0), minute % 60]
+		elif occupied:
+			caption = str(slot.get("display_name", "Save Slot")) + " — Unavailable"
+		var slot_button := _add_button(caption, _emit_slot_selected.bind(slot_id), 44.0, _menu_actions)
+		slot_button.disabled = not saving and (not occupied or not valid)
+	_add_button("Back", _emit_back, 40.0, _menu_actions)
+	_fit_center_panel()
+
+func show_pause(message: String = "") -> void:
+	_panel_mode = "pause"
+	_top_panel.visible = false
+	_bottom_panel.visible = false
+	_context_action.visible = false
+	_pause_button.visible = false
+	_set_dpad_visible(false)
+	_show_center_panel("Paused", message if not message.is_empty() else "The game is paused.")
+	_rebuild_menu_actions()
+	_add_button("Resume", _emit_resume, 46.0, _menu_actions)
+	_add_button("Save", _emit_save, 46.0, _menu_actions)
+	_fit_center_panel()
+
+func show_overwrite_confirmation(slot_name: String) -> void:
+	_panel_mode = "overwrite_confirmation"
+	_top_panel.visible = false
+	_bottom_panel.visible = false
+	_context_action.visible = false
+	_pause_button.visible = false
+	_set_dpad_visible(false)
+	_show_center_panel("Overwrite %s?" % slot_name, "This replaces the save currently in that slot.")
+	_rebuild_menu_actions()
+	_add_button("Overwrite", _emit_overwrite_confirmed, 46.0, _menu_actions)
+	_add_button("Cancel", _emit_back, 42.0, _menu_actions)
+	_fit_center_panel()
+
+func set_context_action(screen_position: Vector2, enabled: bool) -> void:
 	_context_anchor = screen_position
-	_context_label.text = caption
 	_context_action.visible = enabled and not _mobile_mode and _panel_mode == "exploration"
 	_update_context_action_position()
 
-func show_slot_picker(title: String, body: String, slots: Array[Dictionary]) -> void:
-	_panel_mode = "slot_picker"
-	_show_modal_panel()
-	_panel_heading.text = title
-	_panel_body.text = body
-	_rebuild_actions(true)
-	for slot in slots:
-		var caption := "%s   ·   OPEN" % str(slot.get("label", "Slot"))
-		var index := int(slot.get("slot_index", -1))
-		_add_button(caption, _emit_slot_selected.bind(index), 42.0)
-	_add_button("Cancel", _emit_slot_cancel, 42.0)
-	_schedule_panel_fit()
-
-func show_dialogue(view: Dictionary) -> void:
-	_panel_mode = "dialogue"
-	_show_modal_panel()
-	_panel_heading.text = str(view.get("title", "Conversation"))
-	_panel_body.text = str(view.get("body", ""))
-	_rebuild_actions(true)
-	var choices: Array = view.get("choices", [])
-	for item in choices:
-		var choice := item as DialogueChoiceDefinition
-		if choice == null:
-			continue
-		var caption := "%s\n%s" % [choice.label, choice.description]
-		var button := _add_button(caption, _emit_choice.bind(choice.choice_id), 64.0)
-		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_schedule_panel_fit()
+func set_pause_control_visible(enabled: bool) -> void:
+	_pause_button.visible = enabled and _mobile_mode
 
 func show_message(title: String, message: String) -> void:
 	_panel_mode = "message"
@@ -145,86 +201,74 @@ func _build_ui() -> void:
 	_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
+	var hud_theme := Theme.new()
+	hud_theme.default_font = HUD_FONT
+	hud_theme.default_font_size = 15
+	hud_theme.set_color("font_color", "Label", Color("#4d3b29"))
+	hud_theme.set_color("font_color", "Button", Color("#4d3b29"))
+	hud_theme.set_color("font_hover_color", "Button", Color("#fff4df"))
+	hud_theme.set_color("font_pressed_color", "Button", Color("#fff4df"))
+	hud_theme.set_color("font_disabled_color", "Button", Color("#887a66"))
+	_root.theme = hud_theme
 
-	var top_panel := PanelContainer.new()
-	top_panel.anchor_left = 0.025
-	top_panel.anchor_right = 0.975
-	top_panel.anchor_top = 0.0
-	top_panel.anchor_bottom = 0.0
-	top_panel.offset_top = 12.0
-	top_panel.offset_bottom = 140.0
-	_apply_panel_style(top_panel)
-	_root.add_child(top_panel)
+	_top_panel = PanelContainer.new()
+	_top_panel.anchor_left = 0.025
+	_top_panel.anchor_right = 0.975
+	_top_panel.anchor_top = 0.0
+	_top_panel.anchor_bottom = 0.0
+	_top_panel.offset_top = 12.0
+	_top_panel.offset_bottom = 112.0
+	_apply_panel_style(_top_panel)
+	_root.add_child(_top_panel)
 
 	var top_content := VBoxContainer.new()
 	top_content.add_theme_constant_override("separation", 3)
-	top_panel.add_child(top_content)
-	_day_label = Label.new()
-	_day_label.add_theme_font_size_override("font_size", 15)
-	top_content.add_child(_day_label)
-
-	var slot_row := HBoxContainer.new()
-	slot_row.add_theme_constant_override("separation", 5)
-	top_content.add_child(slot_row)
-	for slot_name in ["MORNING", "AFTERNOON", "EVENING"]:
-		var card := PanelContainer.new()
-		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		card.custom_minimum_size.y = 37.0
-		var card_style := StyleBoxFlat.new()
-		card_style.bg_color = Color("#27343a")
-		card_style.border_color = Color("#41534e")
-		card_style.set_border_width_all(1)
-		card_style.set_corner_radius_all(7)
-		card.add_theme_stylebox_override("panel", card_style)
-		slot_row.add_child(card)
-		var card_content := VBoxContainer.new()
-		card_content.add_theme_constant_override("separation", 0)
-		card.add_child(card_content)
-		var title := Label.new()
-		title.text = slot_name
-		title.add_theme_font_size_override("font_size", 9)
-		title.add_theme_color_override("font_color", Color("#b6c4ae"))
-		card_content.add_child(title)
-		var activity := Label.new()
-		activity.text = "Free"
-		activity.clip_text = true
-		activity.add_theme_font_size_override("font_size", 11)
-		card_content.add_child(activity)
-		_slot_panels.append(card)
-		_slot_activity_labels.append(activity)
-		_slot_status_cache.append("")
+	_top_panel.add_child(top_content)
+	_clock_label = Label.new()
+	_clock_label.add_theme_font_size_override("font_size", 16)
+	top_content.add_child(_clock_label)
 
 	var anxiety_row := HBoxContainer.new()
 	anxiety_row.add_theme_constant_override("separation", 8)
 	top_content.add_child(anxiety_row)
 	_anxiety_label = Label.new()
 	_anxiety_label.custom_minimum_size.x = 91.0
-	_anxiety_label.add_theme_font_size_override("font_size", 11)
+	_anxiety_label.add_theme_font_size_override("font_size", 12)
 	anxiety_row.add_child(_anxiety_label)
 	_anxiety_bar = ProgressBar.new()
 	_anxiety_bar.min_value = 0.0
 	_anxiety_bar.max_value = 100.0
 	_anxiety_bar.show_percentage = false
-	_anxiety_bar.custom_minimum_size.y = 9.0
+	_anxiety_bar.custom_minimum_size.y = 13.0
 	_anxiety_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_anxiety_bar.add_theme_stylebox_override("background", _texture_stylebox(BAR_BACKGROUND, 5.0, 0.0))
+	_anxiety_bar.add_theme_stylebox_override("fill", _texture_stylebox(BAR_GREEN, 5.0, 0.0))
 	anxiety_row.add_child(_anxiety_bar)
 
 	var footer := HBoxContainer.new()
 	footer.add_theme_constant_override("separation", 12)
 	top_content.add_child(footer)
 	_trust_label = Label.new()
-	_trust_label.add_theme_font_size_override("font_size", 11)
+	_trust_label.add_theme_font_size_override("font_size", 12)
 	footer.add_child(_trust_label)
 	_effect_label = Label.new()
-	_effect_label.add_theme_font_size_override("font_size", 10)
+	_effect_label.add_theme_font_size_override("font_size", 11)
 	_effect_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_effect_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	footer.add_child(_effect_label)
+	_pause_button = Button.new()
+	_pause_button.text = "Ⅱ"
+	_pause_button.custom_minimum_size = Vector2(42.0, 34.0)
+	_pause_button.focus_mode = Control.FOCUS_NONE
+	_pause_button.mouse_entered.connect(_emit_ui_hover_requested.bind(_pause_button))
+	_pause_button.pressed.connect(_emit_pause_requested)
+	footer.add_child(_pause_button)
+	_pause_button.visible = false
 
 	_notice_label = Label.new()
 	_notice_label.clip_text = true
-	_notice_label.add_theme_color_override("font_color", Color("#f0d889"))
-	_notice_label.add_theme_font_size_override("font_size", 10)
+	_notice_label.add_theme_color_override("font_color", Color("#8a5b1f"))
+	_notice_label.add_theme_font_size_override("font_size", 11)
 	top_content.add_child(_notice_label)
 
 	_bottom_panel = PanelContainer.new()
@@ -242,41 +286,90 @@ func _build_ui() -> void:
 	_bottom_content.add_theme_constant_override("separation", 6)
 	_bottom_panel.add_child(_bottom_content)
 	_panel_heading = Label.new()
-	_panel_heading.add_theme_font_size_override("font_size", 17)
+	_panel_heading.add_theme_font_size_override("font_size", 18)
 	_panel_heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_bottom_content.add_child(_panel_heading)
 	_panel_body = Label.new()
 	_panel_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_panel_body.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_panel_body.add_theme_font_size_override("font_size", 14)
+	_panel_body.add_theme_font_size_override("font_size", 15)
 	_bottom_content.add_child(_panel_body)
 	_actions = HBoxContainer.new()
 	_bottom_content.add_child(_actions)
 
 	_build_context_action()
 	_build_dpad()
+	_build_menu_overlay()
+
+func _build_menu_overlay() -> void:
+	_menu_backdrop = ColorRect.new()
+	_menu_backdrop.color = Color(0.12, 0.1, 0.09, 0.78)
+	_menu_backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_menu_backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	_root.add_child(_menu_backdrop)
+	_menu_backdrop.visible = false
+	_center_panel = PanelContainer.new()
+	_center_panel.anchor_left = 0.07
+	_center_panel.anchor_right = 0.93
+	_center_panel.anchor_top = 0.5
+	_center_panel.anchor_bottom = 0.5
+	_apply_panel_style(_center_panel)
+	_root.add_child(_center_panel)
+	_center_panel.visible = false
+	_center_content = VBoxContainer.new()
+	_center_content.add_theme_constant_override("separation", 8)
+	_center_panel.add_child(_center_content)
+	_welcome_logo = TextureRect.new()
+	_welcome_logo.texture = MISWELL_LOGO
+	_welcome_logo.custom_minimum_size = Vector2(0.0, 140.0)
+	_welcome_logo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_welcome_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_welcome_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_welcome_logo.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_welcome_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_center_content.add_child(_welcome_logo)
+	_welcome_logo.visible = false
+	_center_heading = Label.new()
+	_center_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_center_heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_center_heading.add_theme_font_size_override("font_size", 20)
+	_center_content.add_child(_center_heading)
+	_center_body = Label.new()
+	_center_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_center_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_center_body.add_theme_font_size_override("font_size", 14)
+	_center_content.add_child(_center_body)
+	_menu_actions = VBoxContainer.new()
+	_menu_actions.add_theme_constant_override("separation", 5)
+	_center_content.add_child(_menu_actions)
+
+func _show_center_panel(title: String, message: String) -> void:
+	_welcome_logo.visible = _panel_mode == "welcome"
+	_center_heading.text = title
+	_center_body.text = message
+	_center_panel.visible = true
+	_menu_backdrop.visible = true
+	_fit_center_panel()
+
+func _fit_center_panel() -> void:
+	if not is_instance_valid(_center_panel) or not _center_panel.visible:
+		return
+	var content_height := _center_content.get_combined_minimum_size().y
+	var viewport_height := get_viewport().get_visible_rect().size.y
+	var panel_height := minf(maxf(content_height + 28.0, 190.0), viewport_height - 80.0)
+	_center_panel.offset_top = -panel_height * 0.5
+	_center_panel.offset_bottom = panel_height * 0.5
 
 func _build_context_action() -> void:
-	_context_action = PanelContainer.new()
-	_context_action.custom_minimum_size = Vector2(92.0, 32.0)
+	_context_action = TextureRect.new()
+	_context_action.texture = INTERACTION_PROMPT_E
+	_context_action.custom_minimum_size = Vector2(32.0, 32.0)
+	_context_action.size = Vector2(32.0, 32.0)
+	_context_action.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_context_action.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_context_action.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_context_action.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#243237", 0.96)
-	style.border_color = Color("#e0c982")
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(16)
-	style.content_margin_left = 9.0
-	style.content_margin_right = 9.0
-	style.content_margin_top = 2.0
-	style.content_margin_bottom = 2.0
-	_context_action.add_theme_stylebox_override("panel", style)
 	_root.add_child(_context_action)
-	_context_label = Label.new()
-	_context_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_context_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_context_label.add_theme_font_size_override("font_size", 12)
-	_context_label.add_theme_color_override("font_color", Color("#fff4d6"))
-	_context_action.add_child(_context_label)
 	_context_action.visible = false
 
 func _build_dpad() -> void:
@@ -288,11 +381,7 @@ func _build_dpad() -> void:
 	_dpad.offset_left = -150.0
 	_dpad.offset_right = -10.0
 	_dpad.custom_minimum_size = Vector2(140.0, 142.0)
-	var dpad_style := StyleBoxFlat.new()
-	dpad_style.bg_color = Color(0.075, 0.10, 0.12, 0.72)
-	dpad_style.border_color = Color(0.45, 0.56, 0.50, 0.75)
-	dpad_style.set_border_width_all(1)
-	dpad_style.set_corner_radius_all(13)
+	var dpad_style := _texture_stylebox(PANEL_BROWN, 12.0, 5.0)
 	dpad_style.content_margin_left = 5.0
 	dpad_style.content_margin_right = 5.0
 	dpad_style.content_margin_top = 5.0
@@ -325,7 +414,15 @@ func _add_dpad_button(grid: GridContainer, caption: String, key: StringName) -> 
 	button.text = caption
 	button.custom_minimum_size = Vector2(39.0, 39.0)
 	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", 20)
+	button.add_theme_font_size_override("font_size", 21)
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.mouse_entered.connect(_emit_ui_hover_requested.bind(button))
+	button.add_theme_stylebox_override("normal", _texture_stylebox(BUTTON_SQUARE_BEIGE, 10.0, 0.0))
+	button.add_theme_stylebox_override("hover", _texture_stylebox(BUTTON_SQUARE_BROWN, 10.0, 0.0))
+	button.add_theme_stylebox_override("pressed", _texture_stylebox(BUTTON_SQUARE_BROWN_PRESSED, 10.0, 0.0))
+	button.add_theme_color_override("font_color", Color("#4d3b29"))
+	button.add_theme_color_override("font_hover_color", Color("#fff4df"))
+	button.add_theme_color_override("font_pressed_color", Color("#fff4df"))
 	button.button_down.connect(_set_touch_pressed.bind(key, true))
 	button.button_up.connect(_set_touch_pressed.bind(key, false))
 	grid.add_child(button)
@@ -333,6 +430,7 @@ func _add_dpad_button(grid: GridContainer, caption: String, key: StringName) -> 
 func _show_modal_panel() -> void:
 	_bottom_panel.visible = true
 	_context_action.visible = false
+	_pause_button.visible = false
 	_set_dpad_visible(false)
 
 func _set_dpad_visible(visible: bool) -> void:
@@ -342,16 +440,20 @@ func _set_dpad_visible(visible: bool) -> void:
 		touch_direction_changed.emit(Vector2.ZERO)
 
 func _apply_panel_style(panel: PanelContainer) -> void:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.075, 0.10, 0.12, 0.94)
-	style.border_color = Color("#829b87")
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(10)
-	style.content_margin_left = 12.0
-	style.content_margin_right = 12.0
-	style.content_margin_top = 10.0
-	style.content_margin_bottom = 10.0
-	panel.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", _texture_stylebox(PANEL_BEIGE, 12.0, 14.0))
+
+func _texture_stylebox(texture: Texture2D, edge_margin: float, content_margin: float) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = edge_margin
+	style.texture_margin_right = edge_margin
+	style.texture_margin_top = edge_margin
+	style.texture_margin_bottom = edge_margin
+	style.content_margin_left = content_margin
+	style.content_margin_right = content_margin
+	style.content_margin_top = content_margin
+	style.content_margin_bottom = content_margin
+	return style
 
 func _rebuild_actions(vertical: bool) -> void:
 	if is_instance_valid(_actions):
@@ -365,34 +467,35 @@ func _rebuild_actions(vertical: bool) -> void:
 		_actions.add_theme_constant_override("separation", 6)
 	_bottom_content.add_child(_actions)
 
-func _add_button(caption: String, callback: Callable, minimum_height: float) -> Button:
+func _rebuild_menu_actions() -> void:
+	for child in _menu_actions.get_children():
+		_menu_actions.remove_child(child)
+		child.queue_free()
+
+func _add_button(caption: String, callback: Callable, minimum_height: float, parent: BoxContainer = null) -> Button:
 	var button := Button.new()
 	button.text = caption
 	button.custom_minimum_size = Vector2(0.0, minimum_height)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", 13)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color("#29373b")
-	normal.border_color = Color("#43544f")
-	normal.set_border_width_all(1)
-	normal.set_corner_radius_all(7)
-	normal.content_margin_left = 7.0
-	normal.content_margin_right = 7.0
-	normal.content_margin_top = 4.0
-	normal.content_margin_bottom = 4.0
-	var hover := normal.duplicate() as StyleBoxFlat
-	hover.bg_color = Color("#3b514d")
-	var pressed := normal.duplicate() as StyleBoxFlat
-	pressed.bg_color = Color("#536d60")
+	button.add_theme_font_size_override("font_size", 14)
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var normal := _texture_stylebox(BUTTON_LONG_BEIGE, 12.0, 7.0)
+	var hover := _texture_stylebox(BUTTON_LONG_BROWN, 12.0, 7.0)
+	var pressed := _texture_stylebox(BUTTON_LONG_BROWN_PRESSED, 12.0, 7.0)
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
 	button.add_theme_stylebox_override("disabled", normal)
-	button.add_theme_color_override("font_color", Color("#f1eee2"))
+	button.add_theme_color_override("font_color", Color("#4d3b29"))
+	button.add_theme_color_override("font_hover_color", Color("#fff4df"))
+	button.add_theme_color_override("font_pressed_color", Color("#fff4df"))
+	button.mouse_entered.connect(_emit_ui_hover_requested.bind(button))
+	button.pressed.connect(_emit_ui_click_requested)
 	button.pressed.connect(callback)
-	_actions.add_child(button)
+	var container := parent if parent != null else _actions
+	container.add_child(button)
 	return button
 
 func _schedule_panel_fit() -> void:
@@ -410,7 +513,7 @@ func _fit_bottom_panel() -> void:
 
 func _update_context_action_position() -> void:
 	var bob := sin(_context_elapsed * 5.0) * 4.0
-	_context_action.position = _context_anchor + Vector2(-46.0, -42.0 + bob)
+	_context_action.position = _context_anchor + Vector2(-16.0, -42.0 + bob)
 
 func _set_touch_pressed(key: StringName, pressed: bool) -> void:
 	_touch_pressed[key] = pressed
@@ -429,18 +532,40 @@ func _process(delta: float) -> void:
 		if _notice_seconds <= 0.0:
 			_notice_label.text = ""
 
-func _emit_slot_selected(slot_index: int) -> void:
-	slot_selected.emit(slot_index)
-
-func _emit_slot_cancel() -> void:
-	slot_picker_cancelled.emit()
-
-func _emit_choice(choice_id: StringName) -> void:
-	choice_selected.emit(choice_id)
-
 func _emit_message_action() -> void:
 	message_action_requested.emit()
 
 func _emit_restart() -> void:
 	restart_requested.emit()
 
+func _emit_new_game() -> void:
+	new_game_requested.emit()
+
+func _emit_continue() -> void:
+	continue_requested.emit()
+
+func _emit_slot_selected(slot_id: StringName) -> void:
+	slot_selected.emit(slot_id)
+
+func _emit_overwrite_confirmed() -> void:
+	overwrite_confirmed.emit()
+
+func _emit_back() -> void:
+	back_requested.emit()
+
+func _emit_pause_requested() -> void:
+	pause_requested.emit()
+
+func _emit_resume() -> void:
+	resume_requested.emit()
+
+func _emit_save() -> void:
+	save_requested.emit()
+
+func _emit_ui_click_requested() -> void:
+	ui_click_requested.emit()
+
+func _emit_ui_hover_requested(button: Button) -> void:
+	if button.disabled:
+		return
+	ui_hover_requested.emit()
