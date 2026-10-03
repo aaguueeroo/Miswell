@@ -1,0 +1,11 @@
+Generated using the built-in image generation tool.
+
+Use case: logo-brand.
+Asset type: standalone transparent title wordmark PNG for the welcome screen of a portrait pixel-art RPG called Miswell.
+Primary request: Only the name "Miswell", spelled M-i-s-w-e-l-l, exactly one s, capital M and lowercase iswell. No other text. Create one polished readable game title, not a presentation or mockup.
+Style/medium: carefully designed pixel-art fantasy RPG typography, crisp stepped pixel contours, sturdy custom serif letters with a subtle storybook quality. The existing game has small Kenney-style pixel-art village buildings and parchment-beige and brown RPG menu panels. Match that modest charming retro-game visual language while adding a little eeriness.
+Color palette: warm parchment ivory and aged beige letter faces with restrained brown shading and a deep muted sage-green/charcoal outline. Limited cohesive palette with clean clustered pixel shading.
+Materials/textures: light weathering and a few tiny hairline cracks within letter faces; a slightly off-kilter detail gives quiet unease while every letter remains clear. Subtle dark offset pixel shadow attached directly to the lettering, especially lower edges. Eerie and mysterious, still inviting, no horror gore.
+Composition/framing: a single horizontally centered wordmark, large and fully visible, tightly composed lettering with balanced spacing, enough transparent margin on every side. Clear silhouette readable at welcome-screen sizes.
+Scene/backdrop: genuinely transparent alpha background, empty everywhere outside the lettering and its close attached outline/shadow. No rectangle, no checkerboard drawn in, no scenery.
+Constraints: only "Miswell". No characters, no symbols or icons, no decorative props, no banner, no crest, no border, no subtitle, no watermark, no copied existing game logo. Avoid photorealistic metallic 3D lettering, elaborate gothic filigree, huge flourishes, excessive glow, or smooth vector appearance.
