@@ -14,3 +14,7 @@ The source assets are in `/Users/julia/Documents/ChatGPT/Miswell/misswell assets
 All four requested asset phases are integrated. The remaining check is a fresh in-game pass over the newest GUI/audio changes: welcome logo, enabled and disabled button hover, battle clicks, E/mobile interaction click, and footsteps on grass and concrete at different movement speeds. Godot's headless editor check completed without script parse errors; it logged macOS certificate and editor-settings environment warnings. No test suite was run for this status update.
 
 The editable map layers, source paths, and asset notes are also documented in `README.md`.
+
+## Downloaded assets not assigned to these phases yet
+
+The source folder also contains NPC character sprites, indoor map art, emotes, the Pixel Adventure UI pack, the Mobile Controls pack, and unfiltered impact, RPG, music, and UI audio packs. The implemented scope so far follows the specific choices made in this conversation: the main player, outdoor village/farm/city tiles, RPG Expansion GUI, E prompt and cursors, plus the filtered footsteps and UI sounds. The extra packs remain available for a later asset pass if they fit a requested use.
