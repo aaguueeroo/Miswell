@@ -1,0 +1,9 @@
+{
+  "id": "miswell.base:paranoia",
+  "title": "Paranoia",
+  "is_category": false,
+  "parent_ids": ["miswell.base:anxiety"],
+  "required_node_ids": [],
+  "ability_ids": [],
+  "layout": [1, 2]
+}

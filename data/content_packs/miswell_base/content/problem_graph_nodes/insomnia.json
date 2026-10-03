@@ -1,0 +1,9 @@
+{
+  "id": "miswell.base:insomnia",
+  "title": "Insomnia",
+  "is_category": false,
+  "parent_ids": ["miswell.base:anxiety", "miswell.base:depression"],
+  "required_node_ids": [],
+  "ability_ids": [],
+  "layout": [2, 2]
+}

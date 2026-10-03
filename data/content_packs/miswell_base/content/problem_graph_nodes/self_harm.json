@@ -1,0 +1,9 @@
+{
+  "id": "miswell.base:self_harm",
+  "title": "Self-harm",
+  "is_category": false,
+  "parent_ids": ["miswell.base:depression"],
+  "required_node_ids": [],
+  "ability_ids": [],
+  "layout": [3, 2]
+}
