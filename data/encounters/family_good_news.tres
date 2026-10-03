@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="EncounterDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/domain/encounter_definition.gd" id="1_encounter"]
+[ext_resource type="Script" path="res://scripts/domain/encounter_choice_definition.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_support"]
+script = ExtResource("2_choice")
+choice_id = &"support"
+label = "Stay with the moment"
+description = "Put the worry aside and ask your family to tell you more."
+result_message = "You listen. The good moment has room to breathe."
+outcome_id = &"family_support"
+
+[sub_resource type="Resource" id="Choice_derail"]
+script = ExtResource("2_choice")
+choice_id = &"derail"
+label = "Turn it into a complaint"
+description = "Treat the good news as proof that everyone has overlooked you."
+result_message = "The conversation tightens. The good news is still there, but no one knows what to say next."
+outcome_id = &"family_derail"
+
+[sub_resource type="Resource" id="Choice_threat_focus"]
+script = ExtResource("2_choice")
+choice_id = &"threat_focus"
+label = "Brace for the worst"
+description = "Answer the threat your anxious focus has invented."
+result_message = "You react to the danger you expected. Your family is left unsure how to reach you."
+required_effect_id = &"threat_focus"
+outcome_id = &"family_threat_focus"
+
+[resource]
+script = ExtResource("1_encounter")
+encounter_id = &"family_good_news"
+title = "A small piece of good news"
+prompt = "Your family has good news to share at the picnic table. It is a warm, ordinary moment you can join—or turn against yourself."
+player_name = "You"
+opponent_name = "Family"
+choices = Array[Resource]([SubResource("Choice_support"), SubResource("Choice_derail"), SubResource("Choice_threat_focus")])

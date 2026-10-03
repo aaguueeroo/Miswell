@@ -1,0 +1,49 @@
+[gd_resource type="Resource" script_class="StoryEventDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/domain/story_event_definition.gd" id="1_event"]
+[ext_resource type="Script" path="res://scripts/domain/story_outcome_definition.gd" id="2_outcome"]
+[ext_resource type="Script" path="res://scripts/domain/story_condition_definition.gd" id="3_condition"]
+
+[sub_resource type="Resource" id="Condition_preserved"]
+script = ExtResource("3_condition")
+kind = 1
+fact_id = &"family_opportunity_preserved"
+expected_bool = true
+
+[sub_resource type="Resource" id="Condition_not_preserved"]
+script = ExtResource("3_condition")
+kind = 1
+fact_id = &"family_opportunity_preserved"
+expected_bool = false
+
+[sub_resource type="Resource" id="Outcome_warm"]
+script = ExtResource("2_outcome")
+outcome_id = &"family_follow_up_warm"
+title = "They remember you listened"
+result_message = "The conversation starts easily. Your family picks up the good news where yesterday left off."
+conditions = Array[Resource]([SubResource("Condition_preserved")])
+
+[sub_resource type="Resource" id="Outcome_strained"]
+script = ExtResource("2_outcome")
+outcome_id = &"family_follow_up_strained"
+title = "Yesterday is still here"
+result_message = "There is a pause before anyone speaks. Your family remembers how the good moment turned into a complaint."
+conditions = Array[Resource]([SubResource("Condition_not_preserved")])
+
+[sub_resource type="Resource" id="Outcome_neutral"]
+script = ExtResource("2_outcome")
+outcome_id = &"family_follow_up_neutral"
+title = "A quiet moment"
+result_message = "Your family is here. You share a quiet moment and talk about the day ahead."
+
+[resource]
+script = ExtResource("1_event")
+event_id = &"family_follow_up"
+start_policy = 0
+trigger_source = &"player_interaction"
+initiator_id = &"family"
+daily_action_id = &"family_follow_up"
+repeatable = true
+opens_on_day = 2
+opens_at_minute = 0
+outcomes = Array[Resource]([SubResource("Outcome_warm"), SubResource("Outcome_strained"), SubResource("Outcome_neutral")])

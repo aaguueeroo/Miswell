@@ -1,9 +1,9 @@
 class_name AnxietyCoordinator
 extends RefCounted
 
-var _state: GameState
+var _state: GameSessionState
 
-func _init(state: GameState) -> void:
+func _init(state: GameSessionState) -> void:
 	_state = state
 
 func tick(delta: float) -> bool:

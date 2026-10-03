@@ -7,8 +7,6 @@ script = ExtResource("1")
 location_id = &"home"
 display_name = "Home"
 building_style = &"home"
-activity_label = "Go home"
-interaction_prompt = "Head home and let this day settle."
+interaction_prompt = "Return home for a familiar place to pause."
 visit_message = "A familiar place to come back to."
 interaction_offset = Vector2(3, -45)
-

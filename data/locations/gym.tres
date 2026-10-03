@@ -7,10 +7,7 @@ script = ExtResource("1")
 location_id = &"gym"
 display_name = "Gym"
 building_style = &"gym"
-activity_label = "Gym"
 interaction_prompt = "Take a little time to move and clear your head."
 visit_message = "A short workout gives the day a different rhythm. Your body feels tired, but your thoughts have a little more room."
-available_slots = Array[StringName]([&"afternoon", &"evening"])
 anxiety_delta = -10.0
 interaction_offset = Vector2(0, -52)
-

@@ -1,0 +1,83 @@
+[gd_resource type="Resource" script_class="StoryEventDefinition" load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://scripts/domain/story_event_definition.gd" id="1_event"]
+[ext_resource type="Script" path="res://scripts/domain/story_outcome_definition.gd" id="2_outcome"]
+[ext_resource type="Script" path="res://scripts/domain/story_effect_definition.gd" id="3_effect"]
+
+[sub_resource type="Resource" id="Effect_support_trust"]
+script = ExtResource("3_effect")
+kind = 0
+target_id = &"family"
+amount = 1.0
+
+[sub_resource type="Resource" id="Effect_support_anxiety"]
+script = ExtResource("3_effect")
+kind = 1
+amount = -12.0
+
+[sub_resource type="Resource" id="Effect_support_fact"]
+script = ExtResource("3_effect")
+kind = 2
+fact_id = &"family_opportunity_preserved"
+boolean_value = true
+
+[sub_resource type="Resource" id="Outcome_support"]
+script = ExtResource("2_outcome")
+outcome_id = &"family_support"
+effects = Array[Resource]([SubResource("Effect_support_trust"), SubResource("Effect_support_anxiety"), SubResource("Effect_support_fact")])
+
+[sub_resource type="Resource" id="Effect_derail_trust"]
+script = ExtResource("3_effect")
+kind = 0
+target_id = &"family"
+amount = -1.0
+
+[sub_resource type="Resource" id="Effect_derail_anxiety"]
+script = ExtResource("3_effect")
+kind = 1
+amount = 12.0
+
+[sub_resource type="Resource" id="Effect_derail_fact"]
+script = ExtResource("3_effect")
+kind = 2
+fact_id = &"family_opportunity_preserved"
+boolean_value = false
+
+[sub_resource type="Resource" id="Outcome_derail"]
+script = ExtResource("2_outcome")
+outcome_id = &"family_derail"
+effects = Array[Resource]([SubResource("Effect_derail_trust"), SubResource("Effect_derail_anxiety"), SubResource("Effect_derail_fact")])
+
+[sub_resource type="Resource" id="Effect_threat_trust"]
+script = ExtResource("3_effect")
+kind = 0
+target_id = &"family"
+amount = -1.0
+
+[sub_resource type="Resource" id="Effect_threat_consume"]
+script = ExtResource("3_effect")
+kind = 3
+
+[sub_resource type="Resource" id="Effect_threat_fact"]
+script = ExtResource("3_effect")
+kind = 2
+fact_id = &"family_opportunity_preserved"
+boolean_value = false
+
+[sub_resource type="Resource" id="Outcome_threat"]
+script = ExtResource("2_outcome")
+outcome_id = &"family_threat_focus"
+effects = Array[Resource]([SubResource("Effect_threat_trust"), SubResource("Effect_threat_consume"), SubResource("Effect_threat_fact")])
+
+[resource]
+script = ExtResource("1_event")
+event_id = &"family_good_news"
+start_policy = 0
+trigger_source = &"player_interaction"
+initiator_id = &"family"
+encounter_id = &"family_good_news"
+opens_on_day = 1
+opens_at_minute = 480
+closes_on_day = 1
+closes_at_minute = 1200
+outcomes = Array[Resource]([SubResource("Outcome_support"), SubResource("Outcome_derail"), SubResource("Outcome_threat")])

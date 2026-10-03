@@ -1,6 +1,11 @@
 class_name RelationshipRules
 extends RefCounted
 
-static func adjust_family_trust(state: GameState, delta: int) -> int:
-	state.family_trust = clampi(state.family_trust + delta, -3, 3)
-	return state.family_trust
+static func adjust(state: GameSessionState, relationship_id: StringName, delta: int) -> int:
+	var current := int(state.relationship_values.get(relationship_id, 0))
+	var updated := clampi(current + delta, -3, 3)
+	state.relationship_values[relationship_id] = updated
+	return updated
+
+static func value_for(state: GameSessionState, relationship_id: StringName) -> int:
+	return int(state.relationship_values.get(relationship_id, 0))

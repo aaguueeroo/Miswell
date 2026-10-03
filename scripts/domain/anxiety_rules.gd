@@ -4,7 +4,7 @@ extends RefCounted
 const THRESHOLD: float = 65.0
 const EFFECT_DURATION_SECONDS: float = 25.0
 
-static func apply_delta(state: GameState, delta: float) -> Dictionary:
+static func apply_delta(state: GameSessionState, delta: float) -> Dictionary:
 	state.anxiety = clampf(state.anxiety + delta, 0.0, 100.0)
 	var effect_activated := false
 	if state.anxiety >= THRESHOLD and state.anxiety_effect_id == &"":
@@ -17,7 +17,7 @@ static func apply_delta(state: GameState, delta: float) -> Dictionary:
 		"anxiety": state.anxiety
 	}
 
-static func tick(state: GameState, delta: float) -> bool:
+static func tick(state: GameSessionState, delta: float) -> bool:
 	if state.anxiety_effect_id == &"":
 		return false
 	state.anxiety_effect_seconds = maxf(0.0, state.anxiety_effect_seconds - delta)
@@ -27,7 +27,7 @@ static func tick(state: GameState, delta: float) -> bool:
 		return true
 	return false
 
-static func consume_effect(state: GameState) -> bool:
+static func consume_effect(state: GameSessionState) -> bool:
 	if state.anxiety_effect_id == &"":
 		return false
 	state.anxiety_effect_id = &""
