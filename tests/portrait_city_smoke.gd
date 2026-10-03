@@ -37,32 +37,27 @@ func _run() -> void:
 		scene.call("_try_mobile_tap", school_door_screen + Vector2(0.0, 63.0))
 		_check(hud.get_panel_mode() == "exploration", "taps outside the door hotspot do nothing", failures)
 		scene.call("_try_mobile_tap", school_door_screen)
-		_check(hud.get_panel_mode() == "slot_picker", "tapping a reachable door opens its action", failures)
-		scene.call("_cancel_slot_picker")
+		_check(hud.get_panel_mode() == "message", "tapping a reachable door resolves its action immediately", failures)
+		scene.call("_resume_exploration")
 		player.global_position = Vector2(60.0, 60.0)
 		await process_frame
 		await process_frame
 		_check(not context_prompt.visible, "context prompt hides out of range", failures)
 
 	var session := GameSession.new()
-	var initial_view := session.dialogue.begin_or_follow_up(0)
-	_check(initial_view.get("kind", "") == "choices", "family encounter opens after scheduling", failures)
-	var first_thought := session.dialogue.choose(&"overthink")
-	_check(first_thought.get("kind", "") == "continue" and session.dialogue.is_encounter_active(), "overthinking stays inside the conversation", failures)
-	var second_thought := session.dialogue.choose(&"overthink")
-	_check(second_thought.get("effect_activated", false), "repeated overthinking activates anxious focus", failures)
-	var choices: Array = second_thought.get("view", {}).get("choices", [])
-	var threat_reply_available := false
-	for choice_resource in choices:
-		var choice := choice_resource as DialogueChoiceDefinition
-		if choice != null and choice.choice_id == &"threat_focus":
-			threat_reply_available = true
-	_check(threat_reply_available, "anxious focus reveals the conditional reply", failures)
-	var final_reply := session.dialogue.choose(&"support")
-	_check(final_reply.get("ok", false) and not session.dialogue.is_encounter_active(), "conversation choice completes the encounter", failures)
+	var initial_view := session.begin_encounter(EncounterStartRequest.new(&"family_good_news", &"family_good_news", &"family", &"player_interaction"))
+	_check(initial_view.get("ok", false), "family encounter opens from player interaction", failures)
+	var paused_minute := session.state.minute_of_day
+	session.tick(5.0)
+	_check(session.state.minute_of_day == paused_minute, "world time pauses during an encounter", failures)
+	var final_reply := session.choose_encounter(&"support")
+	_check(final_reply.get("ok", false) and session.state.outcome_journal.size() == 1, "encounter choice records one resolved outcome", failures)
+	session.close_encounter_result()
+	session.tick(1.0)
+	_check(session.state.minute_of_day == paused_minute + 2, "world time resumes after encounter result closes", failures)
 
 	if failures.is_empty():
-		print("PASS: portrait city camera, contextual actions, hidden footer, and conversation flow")
+		print("PASS: portrait city camera, contextual actions, world clock, and encounter flow")
 		quit(0)
 	else:
 		for failure in failures:
