@@ -21,8 +21,11 @@ func _append_from_pack_root(root: String, content_type: String, documents: Array
 		var manifest_path := pack_root.path_join("manifest.json")
 		var manifest := _read_dictionary(manifest_path)
 		var pack_id := str(manifest.get("id", ""))
-		if pack_id.is_empty() or pack_id.contains(":" ):
+		if pack_id.is_empty() or pack_id.contains(":"):
 			push_warning("Ignoring content pack with an invalid ID: %s" % manifest_path)
+			continue
+		if int(manifest.get("format_version", 0)) != 1:
+			push_warning("Ignoring content pack with an unsupported format version: %s" % manifest_path)
 			continue
 		var content_directory_path := pack_root.path_join("content").path_join(content_type)
 		var content_directory := DirAccess.open(content_directory_path)

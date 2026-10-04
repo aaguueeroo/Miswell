@@ -45,6 +45,9 @@ func apply_outcome(event_id: StringName, outcome_id: StringName) -> bool:
 	_state.pending_event_ids.erase(event_id)
 	return true
 
+func are_conditions_met(conditions: Array[Resource]) -> bool:
+	return _all_conditions_met(conditions)
+
 func resolve_automatic_event(event_id: StringName, source: StringName) -> Dictionary:
 	if not is_event_available(event_id, source):
 		return {"ok": false, "message": "That event is not available."}
@@ -131,6 +134,10 @@ func _condition_is_met(condition: StoryConditionDefinition) -> bool:
 			return _state.minute_of_day >= condition.start_minute or _state.minute_of_day < condition.end_minute
 		StoryConditionDefinition.ConditionKind.LIFE_STAGE_EQUALS:
 			return _state.life_stage_id == condition.life_stage_id
+		StoryConditionDefinition.ConditionKind.PROBLEM_GRAPH_NODE_COMPLETED:
+			return _state.has_completed_problem_graph_node(condition.graph_node_id)
+		StoryConditionDefinition.ConditionKind.ABILITY_UNLOCKED:
+			return _problem_graph.is_ability_unlocked(condition.ability_id)
 		StoryConditionDefinition.ConditionKind.ALL_OF:
 			return _all_conditions_met(condition.conditions)
 		StoryConditionDefinition.ConditionKind.ANY_OF:

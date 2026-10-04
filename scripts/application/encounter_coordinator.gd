@@ -43,6 +43,8 @@ func choose(choice_id: StringName) -> Dictionary:
 			continue
 		if choice.required_effect_id != &"" and choice.required_effect_id != _state.anxiety_effect_id:
 			return {"ok": false, "message": "That reply is no longer available."}
+		if not _story.are_conditions_met(choice.conditions):
+			return {"ok": false, "message": "That reply is no longer available."}
 		var effect_was_active := _state.anxiety_effect_id != &""
 		if not _story.apply_outcome(_active_request.event_id, choice.outcome_id):
 			return {"ok": false, "message": "That outcome is no longer available."}
@@ -74,6 +76,8 @@ func _build_view() -> Dictionary:
 		if choice == null:
 			continue
 		if choice.required_effect_id != &"" and choice.required_effect_id != _state.anxiety_effect_id:
+			continue
+		if not _story.are_conditions_met(choice.conditions):
 			continue
 		choices.append(choice)
 	return {
