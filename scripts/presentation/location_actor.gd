@@ -1,11 +1,39 @@
 class_name LocationActor
 extends StaticBody2D
 
+signal door_crossed(location_id: StringName)
+
 @export var definition: LocationDefinition
+
+@onready var _wall_left: CollisionShape2D = $WallLeft
+@onready var _wall_right: CollisionShape2D = $WallRight
+@onready var _wall_above_door: CollisionShape2D = $WallAboveDoor
+@onready var _door_area: Area2D = $DoorArea
 
 func _ready() -> void:
 	add_to_group("locations")
+	_configure_doorway()
+	_door_area.body_entered.connect(_on_door_body_entered)
 	queue_redraw()
+
+func _configure_doorway() -> void:
+	var door_x: float = clampf(definition.interaction_offset.x if definition != null else 0.0, -45.0, 45.0)
+	var left_width: float = door_x + 48.0
+	var right_width: float = 48.0 - door_x
+	var left_shape := (_wall_left.shape as RectangleShape2D).duplicate() as RectangleShape2D
+	left_shape.size = Vector2(left_width, 55.0)
+	_wall_left.shape = left_shape
+	_wall_left.position = Vector2(-66.0 + left_width * 0.5, -42.0)
+	var right_shape := (_wall_right.shape as RectangleShape2D).duplicate() as RectangleShape2D
+	right_shape.size = Vector2(right_width, 55.0)
+	_wall_right.shape = right_shape
+	_wall_right.position = Vector2(66.0 - right_width * 0.5, -42.0)
+	_wall_above_door.position.x = door_x
+	_door_area.position.x = door_x
+
+func _on_door_body_entered(body: Node2D) -> void:
+	if definition != null and body is PlayerActor:
+		door_crossed.emit(definition.location_id)
 
 func get_interaction_anchor() -> Vector2:
 	if definition == null:
@@ -108,4 +136,3 @@ func _draw_ellipse(center: Vector2, radius_x: float, radius_y: float, color: Col
 		var angle := TAU * float(index) / 24.0
 		points.append(center + Vector2(cos(angle) * radius_x, sin(angle) * radius_y))
 	draw_colored_polygon(points, color)
-

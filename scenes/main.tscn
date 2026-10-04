@@ -1,18 +1,23 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/presentation/app_root.gd" id="1_app"]
 [ext_resource type="PackedScene" path="res://scenes/world/village.tscn" id="2_village"]
 [ext_resource type="PackedScene" path="res://scenes/actors/family_npc.tscn" id="3_family"]
 [ext_resource type="PackedScene" path="res://scenes/actors/player_actor.tscn" id="4_player"]
+[ext_resource type="PackedScene" path="res://scenes/world/world_lighting.tscn" id="5_lighting"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_app")
 
-[node name="Village" parent="." instance=ExtResource("2_village")]
+[node name="WorldSimulation" type="Node2D" parent="."]
+process_mode = 1
 
-[node name="Family" parent="." instance=ExtResource("3_family")]
+[node name="Village" parent="WorldSimulation" instance=ExtResource("2_village")]
+
+[node name="Family" parent="WorldSimulation" instance=ExtResource("3_family")]
 position = Vector2(700, 735)
 
-[node name="Player" parent="." instance=ExtResource("4_player")]
+[node name="Player" parent="WorldSimulation" instance=ExtResource("4_player")]
 position = Vector2(520, 940)
 
+[node name="WorldLighting" parent="WorldSimulation" instance=ExtResource("5_lighting")]

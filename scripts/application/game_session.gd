@@ -1,6 +1,8 @@
 class_name GameSession
 extends RefCounted
 
+signal simulation_mode_changed(mode: int)
+
 enum SimulationMode { EXPLORATION, ENCOUNTER, BLOCKING_UI, PAUSED }
 
 var state: GameSessionState
@@ -27,7 +29,10 @@ func _init(restored_state: GameSessionState = null, fractional_game_minutes: flo
 	encounters = EncounterCoordinator.new(state, content_catalog, story)
 
 func set_simulation_mode(mode: SimulationMode) -> void:
+	if simulation_mode == mode:
+		return
 	simulation_mode = mode
+	simulation_mode_changed.emit(mode)
 
 func tick(real_delta: float) -> SessionUpdate:
 	var midnights := 0
@@ -48,7 +53,7 @@ func tick(real_delta: float) -> SessionUpdate:
 func begin_encounter(request: EncounterStartRequest) -> Dictionary:
 	var result := encounters.begin_encounter(request)
 	if result.get("ok", false):
-		simulation_mode = SimulationMode.ENCOUNTER
+		set_simulation_mode(SimulationMode.ENCOUNTER)
 	return result
 
 func choose_encounter(choice_id: StringName) -> Dictionary:
@@ -56,7 +61,7 @@ func choose_encounter(choice_id: StringName) -> Dictionary:
 
 func close_encounter_result() -> void:
 	encounters.close_result()
-	simulation_mode = SimulationMode.EXPLORATION
+	set_simulation_mode(SimulationMode.EXPLORATION)
 
 func resolve_family_follow_up() -> Dictionary:
 	if state.has_action_been_used(&"family_follow_up"):

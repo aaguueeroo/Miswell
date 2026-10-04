@@ -1,6 +1,21 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/presentation/family_npc.gd" id="1_family"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/mom/SeparateAnim/Idle.png" id="2_idle"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/mom/SeparateAnim/Walk.png" id="3_walk"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/mom/Faceset.png" id="4_portrait"]
 
 [node name="Family" type="Node2D"]
 script = ExtResource("1_family")
+display_name = "Mom"
+dialogue_text = "It's nice to have everyone together. Come sit with us for a while."
+story_actor_id = &"family"
+opens_battle_ui_on_interaction = true
+portrait_texture = ExtResource("4_portrait")
+idle_sheet = ExtResource("2_idle")
+walk_sheet = ExtResource("3_walk")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -7)
+scale = Vector2(2, 2)
+texture_filter = 1

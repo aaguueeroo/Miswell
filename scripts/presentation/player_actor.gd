@@ -10,8 +10,10 @@ var _touch_direction: Vector2 = Vector2.ZERO
 var _facing: String = "down"
 var _is_walking: bool = false
 var _suppress_footstep_events: bool = false
+var _world_bounds: Vector2 = VillageMapConfig.WORLD_SIZE
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var _camera: Camera2D = $Camera2D
 
 const PLAYER_ASSET_PATH := "res://assets/characters/player/boy/SeparateAnim/"
 const BASE_WALK_SPEED: float = 185.0
@@ -30,6 +32,19 @@ func set_controls_enabled(enabled: bool) -> void:
 func set_touch_direction(direction: Vector2) -> void:
 	_touch_direction = direction.normalized()
 
+func set_world_bounds(world_size: Vector2) -> void:
+	_world_bounds = world_size
+	_camera.limit_right = roundi(world_size.x)
+	_camera.limit_bottom = roundi(world_size.y)
+	_camera.reset_smoothing()
+
+func teleport_to(world_position: Vector2, world_size: Vector2) -> void:
+	set_world_bounds(world_size)
+	global_position = world_position
+	_camera.reset_smoothing()
+	# The world is paused during area transitions, so update the visible scroll now.
+	_camera.force_update_scroll()
+
 func _resolve_cardinal_direction(direction: Vector2) -> Vector2:
 	if absf(direction.x) > absf(direction.y):
 		return Vector2(signf(direction.x), 0.0)
@@ -37,7 +52,7 @@ func _resolve_cardinal_direction(direction: Vector2) -> Vector2:
 		return Vector2(0.0, signf(direction.y))
 	return Vector2.ZERO
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	if not controls_enabled:
 		velocity = Vector2.ZERO
 		move_and_slide()
@@ -47,16 +62,14 @@ func _physics_process(delta: float) -> void:
 	direction.x = float(Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT)) - float(Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT))
 	direction.y = float(Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN)) - float(Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP))
 	direction += _touch_direction
-	velocity = _resolve_cardinal_direction(direction) * move_speed
-	var position_before_move := global_position
+	var intended_direction := _resolve_cardinal_direction(direction)
+	velocity = intended_direction * move_speed
 	move_and_slide()
 	var margin := 20.0
-	global_position.x = clampf(global_position.x, margin, VillageMapConfig.WORLD_SIZE.x - margin)
-	global_position.y = clampf(global_position.y, margin, VillageMapConfig.WORLD_SIZE.y - margin)
-	var movement := global_position - position_before_move
-	var movement_speed := movement.length() / maxf(delta, 0.0001)
-	var movement_direction := movement.normalized() if movement_speed > 0.001 else Vector2.ZERO
-	_update_character_animation(movement_direction, movement_speed)
+	global_position.x = clampf(global_position.x, margin, _world_bounds.x - margin)
+	global_position.y = clampf(global_position.y, margin, _world_bounds.y - margin)
+	# Collision recovery and sliding must not change facing or walking cadence.
+	_update_character_animation(intended_direction, move_speed)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not controls_enabled:

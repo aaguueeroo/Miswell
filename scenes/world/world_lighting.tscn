@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/presentation/world_lighting.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/lighting/soft_light.tres" id="2_texture"]
+
+[node name="WorldLighting" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Ambient" type="CanvasModulate" parent="."]
+
+[node name="SkyLight" type="DirectionalLight2D" parent="."]
+enabled = false
+color = Color(0.663, 0.788, 0.925, 1)
+energy = 0.0
+
+[node name="WarmLights" type="Node2D" parent="."]
+
+[node name="Home" type="PointLight2D" parent="WarmLights"]
+position = Vector2(794, 440)
+enabled = false
+color = Color(1, 0.73, 0.43, 1)
+energy = 0.0
+texture = ExtResource("2_texture")
+texture_scale = 1.5
+
+[node name="School" type="PointLight2D" parent="WarmLights"]
+position = Vector2(335, 1000)
+enabled = false
+color = Color(1, 0.73, 0.43, 1)
+energy = 0.0
+texture = ExtResource("2_texture")
+texture_scale = 1.5
+
+[node name="Market" type="PointLight2D" parent="WarmLights"]
+position = Vector2(730, 1320)
+enabled = false
+color = Color(1, 0.73, 0.43, 1)
+energy = 0.0
+texture = ExtResource("2_texture")
+texture_scale = 1.5
+
+[node name="Gym" type="PointLight2D" parent="WarmLights"]
+position = Vector2(326, 1705)
+enabled = false
+color = Color(1, 0.73, 0.43, 1)
+energy = 0.0
+texture = ExtResource("2_texture")
+texture_scale = 1.5

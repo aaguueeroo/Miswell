@@ -11,6 +11,9 @@ const BUTTON_LONG_BROWN_PRESSED: Texture2D = preload("res://assets/gui/kenney_ui
 const BUTTON_SQUARE_BEIGE: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/buttonSquare_beige.png")
 const BUTTON_SQUARE_BROWN: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/buttonSquare_brown.png")
 const BUTTON_SQUARE_BROWN_PRESSED: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/buttonSquare_brown_pressed.png")
+const BUTTON_SQUARE_BLUE: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/buttonSquare_blue.png")
+const ARROW_RIGHT: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/arrowBrown_right.png")
+const ARROW_RIGHT_HOVER: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/arrowBeige_right.png")
 const BAR_BACKGROUND: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/barBack_horizontalMid.png")
 const BAR_GREEN: Texture2D = preload("res://assets/gui/kenney_ui-pack-rpg-expansion/PNG/barGreen_horizontalMid.png")
 const HUD_FONT: FontFile = preload("res://assets/fonts/Kenney/Fonts/Kenney Mini.ttf")
@@ -31,6 +34,7 @@ signal pause_requested
 signal problem_graph_requested
 signal resume_requested
 signal save_requested
+signal time_speed_requested(multiplier: int)
 
 var _root: Control
 var _clock_label: Label
@@ -63,6 +67,7 @@ var _menu_actions: VBoxContainer
 var _center_heading: Label
 var _center_body: Label
 var _welcome_logo: TextureRect
+var _debug_time_buttons: Array[Button] = []
 
 static func is_mobile_platform() -> bool:
 	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")
@@ -75,6 +80,12 @@ func update_clock(day_number: int, minute_of_day: int, phase: StringName) -> voi
 	var hour := floori(float(minute_of_day) / 60.0)
 	var minute := minute_of_day % 60
 	_clock_label.text = "Day %d  ·  %02d:%02d  ·  %s" % [day_number, hour, minute, "Day" if phase == &"day" else "Night"]
+
+func set_debug_time_speed(multiplier: int) -> void:
+	for index in _debug_time_buttons.size():
+		var button: Button = _debug_time_buttons[index]
+		var texture: Texture2D = BUTTON_SQUARE_BLUE if WorldClockCoordinator.DEBUG_TIME_SCALES[index] == multiplier else BUTTON_SQUARE_BEIGE
+		button.add_theme_stylebox_override("normal", _texture_stylebox(texture, 10.0, 0.0))
 
 func update_status(state: GameSessionState) -> void:
 	_anxiety_bar.value = state.anxiety
@@ -233,9 +244,17 @@ func _build_ui() -> void:
 	var top_content := VBoxContainer.new()
 	top_content.add_theme_constant_override("separation", 3)
 	_top_panel.add_child(top_content)
+	var clock_row := HBoxContainer.new()
+	clock_row.add_theme_constant_override("separation", 4)
+	top_content.add_child(clock_row)
 	_clock_label = Label.new()
 	_clock_label.add_theme_font_size_override("font_size", 16)
-	top_content.add_child(_clock_label)
+	_clock_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	clock_row.add_child(_clock_label)
+	if OS.is_debug_build():
+		for index in WorldClockCoordinator.DEBUG_TIME_SCALES.size():
+			_add_time_speed_button(clock_row, int(WorldClockCoordinator.DEBUG_TIME_SCALES[index]), index + 1)
+		set_debug_time_speed(1)
 
 	var anxiety_row := HBoxContainer.new()
 	anxiety_row.add_theme_constant_override("separation", 8)
@@ -420,6 +439,48 @@ func _build_dpad() -> void:
 	_add_dpad_button(grid, "↓", &"down")
 	_add_dpad_spacer(grid)
 	_dpad.visible = false
+
+func _add_time_speed_button(row: HBoxContainer, multiplier: int, arrow_count: int) -> void:
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(23.0 + 10.0 * float(arrow_count), 30.0)
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.tooltip_text = "%d× time" % multiplier
+	button.add_theme_stylebox_override("normal", _texture_stylebox(BUTTON_SQUARE_BEIGE, 10.0, 0.0))
+	button.add_theme_stylebox_override("hover", _texture_stylebox(BUTTON_SQUARE_BROWN, 10.0, 0.0))
+	button.add_theme_stylebox_override("pressed", _texture_stylebox(BUTTON_SQUARE_BROWN_PRESSED, 10.0, 0.0))
+	button.mouse_entered.connect(_emit_ui_hover_requested.bind(button))
+	button.mouse_entered.connect(_set_time_button_arrows.bind(button, ARROW_RIGHT_HOVER))
+	button.mouse_exited.connect(_set_time_button_arrows.bind(button, ARROW_RIGHT))
+	button.pressed.connect(_emit_time_speed_requested.bind(multiplier))
+	row.add_child(button)
+	_debug_time_buttons.append(button)
+	for arrow_index in arrow_count:
+		var arrow := TextureRect.new()
+		arrow.texture = ARROW_RIGHT
+		arrow.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		arrow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		arrow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		arrow.anchor_left = 0.5
+		arrow.anchor_right = 0.5
+		arrow.anchor_top = 0.5
+		arrow.anchor_bottom = 0.5
+		arrow.offset_left = -6.0 * float(arrow_count) + 12.0 * float(arrow_index)
+		arrow.offset_right = arrow.offset_left + 12.0
+		arrow.offset_top = -6.0
+		arrow.offset_bottom = 6.0
+		button.add_child(arrow)
+
+func _emit_time_speed_requested(multiplier: int) -> void:
+	ui_click_requested.emit()
+	time_speed_requested.emit(multiplier)
+
+func _set_time_button_arrows(button: Button, texture: Texture2D) -> void:
+	for child in button.get_children():
+		var arrow := child as TextureRect
+		if arrow != null:
+			arrow.texture = texture
 
 func _add_dpad_spacer(grid: GridContainer) -> void:
 	var spacer := Control.new()

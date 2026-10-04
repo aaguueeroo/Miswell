@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=26 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/world/village_map.tscn" id="1_city_map"]
 [ext_resource type="PackedScene" path="res://scenes/locations/location_actor.tscn" id="2_location"]
@@ -6,6 +6,25 @@
 [ext_resource type="Resource" path="res://data/locations/school.tres" id="4_school"]
 [ext_resource type="Resource" path="res://data/locations/supermarket.tres" id="5_market"]
 [ext_resource type="Resource" path="res://data/locations/gym.tres" id="6_gym"]
+[ext_resource type="PackedScene" path="res://scenes/actors/npc_actor.tscn" id="7_npc"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/grandpa/SeparateAnim/Idle.png" id="8_grandpa_idle"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/grandpa/SeparateAnim/Walk.png" id="9_grandpa_walk"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/sister/SeparateAnim/Idle.png" id="10_sister_idle"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/sister/SeparateAnim/Walk.png" id="11_sister_walk"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/villager_1/SeparateAnim/Idle.png" id="12_villager_1_idle"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/villager_1/SeparateAnim/Walk.png" id="13_villager_1_walk"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/villager_2/SeparateAnim/Idle.png" id="14_villager_2_idle"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/villager_2/SeparateAnim/Walk.png" id="15_villager_2_walk"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/villager_3/SeparateAnim/Idle.png" id="16_villager_3_idle"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/villager_3/SeparateAnim/Walk.png" id="17_villager_3_walk"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/dad/SeparateAnim/Idle.png" id="18_dad_idle"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/dad/SeparateAnim/Walk.png" id="19_dad_walk"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/grandpa/Faceset.png" id="20_grandpa_portrait"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/dad/Faceset.png" id="21_dad_portrait"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/family/sister/Faceset.png" id="22_sister_portrait"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/villager_1/Faceset.png" id="23_villager_1_portrait"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/villager_2/Faceset1.png" id="24_villager_2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/characters/npcs/villager_3/Faceset.png" id="25_villager_3_portrait"]
 
 [node name="Village" type="Node2D"]
 
@@ -26,3 +45,63 @@ definition = ExtResource("5_market")
 [node name="Gym" parent="." instance=ExtResource("2_location")]
 position = Vector2(326, 1755)
 definition = ExtResource("6_gym")
+
+[node name="Grandpa" parent="." instance=ExtResource("7_npc")]
+position = Vector2(650, 710)
+display_name = "Grandpa"
+dialogue_text = "This is a good spot for a picnic. Take your time."
+story_actor_id = &"family"
+opens_battle_ui_on_interaction = true
+portrait_texture = ExtResource("20_grandpa_portrait")
+idle_sheet = ExtResource("8_grandpa_idle")
+walk_sheet = ExtResource("9_grandpa_walk")
+
+[node name="Dad" parent="." instance=ExtResource("7_npc")]
+position = Vector2(750, 700)
+display_name = "Dad"
+dialogue_text = "Glad you made it. Come join us."
+story_actor_id = &"family"
+opens_battle_ui_on_interaction = true
+portrait_texture = ExtResource("21_dad_portrait")
+idle_sheet = ExtResource("18_dad_idle")
+walk_sheet = ExtResource("19_dad_walk")
+
+[node name="Sister" parent="." instance=ExtResource("7_npc")]
+position = Vector2(775, 745)
+display_name = "Sister"
+dialogue_text = "I saved you a place beside me!"
+story_actor_id = &"family"
+opens_battle_ui_on_interaction = true
+portrait_texture = ExtResource("22_sister_portrait")
+idle_sheet = ExtResource("10_sister_idle")
+walk_sheet = ExtResource("11_sister_walk")
+
+[node name="Villager1" parent="." instance=ExtResource("7_npc")]
+position = Vector2(160, 948)
+display_name = "Villager 1"
+dialogue_text = "Morning! I'm heading across town."
+opens_battle_ui_on_interaction = true
+portrait_texture = ExtResource("23_villager_1_portrait")
+idle_sheet = ExtResource("12_villager_1_idle")
+walk_sheet = ExtResource("13_villager_1_walk")
+route_offsets = PackedVector2Array(0, 0, 270, 0)
+
+[node name="Villager2" parent="." instance=ExtResource("7_npc")]
+position = Vector2(510, 1050)
+display_name = "Villager 2"
+dialogue_text = "I like walking through the village."
+opens_battle_ui_on_interaction = true
+portrait_texture = ExtResource("24_villager_2_portrait")
+idle_sheet = ExtResource("14_villager_2_idle")
+walk_sheet = ExtResource("15_villager_2_walk")
+route_offsets = PackedVector2Array(0, 0, 64, 0, 64, 128, 0, 128)
+
+[node name="Villager3" parent="." instance=ExtResource("7_npc")]
+position = Vector2(880, 1370)
+display_name = "Villager 3"
+dialogue_text = "The market gets busy around this time."
+opens_battle_ui_on_interaction = true
+portrait_texture = ExtResource("25_villager_3_portrait")
+idle_sheet = ExtResource("16_villager_3_idle")
+walk_sheet = ExtResource("17_villager_3_walk")
+route_offsets = PackedVector2Array(0, 0, 96, 0, 96, 100, 0, 100)
