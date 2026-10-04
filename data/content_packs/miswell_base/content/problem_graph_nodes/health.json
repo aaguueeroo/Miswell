@@ -1,6 +1,6 @@
 {
   "id": "miswell.base:health",
-  "title": "Health",
+  "title": "Unhealth",
   "is_category": true,
   "parent_ids": [],
   "required_node_ids": [],
